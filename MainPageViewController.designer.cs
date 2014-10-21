@@ -20,7 +20,7 @@ namespace MyoSampleApp
 
 		[Outlet]
 		[GeneratedCode ("iOS Designer", "1.0")]
-		UIView accelerationProgressBar { get; set; }
+		UIProgressView accelerationProgressBar { get; set; }
 
 		[Outlet]
 		[GeneratedCode ("iOS Designer", "1.0")]

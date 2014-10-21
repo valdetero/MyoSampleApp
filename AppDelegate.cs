@@ -28,7 +28,7 @@ namespace MyoSampleApp
 		//
 		public override bool FinishedLaunching(UIApplication app, NSDictionary options)
 		{
-			TLMHub.SharedHub().ApplicationIdentifier = "com.myo.test";
+			TLMHub.SharedHub().ApplicationIdentifier = "com.myo.MySampleApp";
 			TLMHub.SharedHub().AttachToAdjacent();
 
 			// create a new window instance based on the screen size

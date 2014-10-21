@@ -4,6 +4,7 @@ using MonoTouch.UIKit;
 using System.CodeDom.Compiler;
 using Myo;
 using MonoTouch.CoreAnimation;
+using OpenTK;
 
 namespace MyoSampleApp
 {
@@ -12,6 +13,7 @@ namespace MyoSampleApp
 		TLMPose currentPose;
 		UINavigationController controller;
 
+
 		public MainPageViewController (IntPtr handle) : base (handle)
 		{
 
@@ -19,9 +21,11 @@ namespace MyoSampleApp
 
 		public override void ViewDidLoad()
 		{
+			Xamarin.Insights.Track("viewDidLoad");
+
 			base.ViewDidLoad();
 
-			//accelerationProgressBar.Hidden = true;
+			accelerationProgressBar.Hidden = true;
 
 			btnConnect.TouchUpInside += HandleTouchUpInside;
 
@@ -37,6 +41,8 @@ namespace MyoSampleApp
 
 		void HandleTouchUpInside (object sender, EventArgs e)
 		{
+			Xamarin.Insights.Track("touchupinside");
+
 			controller = TLMSettingsViewController.SettingsInNavigationController();
 			controller.ModalPresentationStyle = UIModalPresentationStyle.OverCurrentContext;
 			// Present the settings view controller modally.
@@ -45,6 +51,8 @@ namespace MyoSampleApp
 
 		void deviceConnected(object sender, NSNotificationEventArgs e)
 		{
+			Xamarin.Insights.Track("deviceConnected");
+
 			var notification = e.Notification;
 
 			// Set the text of the armLabel to "Perform the Sync Gesture"
@@ -60,6 +68,8 @@ namespace MyoSampleApp
 
 		void deviceDisconnected(object sender, NSNotificationEventArgs e)
 		{
+			Xamarin.Insights.Track("deviceDisconnected");
+
 			var notification = e.Notification;
 			// Remove the text of our label when the Myo has disconnected.
 			this.helloLabel.Text = @"";
@@ -72,6 +82,8 @@ namespace MyoSampleApp
 
 		void armRecognized(object sender, NSNotificationEventArgs e)
 		{
+			Xamarin.Insights.Track("armRecognized");
+
 			var notification = e.Notification;
 			// Retrieve the arm event from the notification's userInfo with the kTLMKeyArmRecognizedEvent key.
 			TLMArmRecognizedEvent armEvent = notification.UserInfo[TLMMyo.TLMKeyArmRecognizedEvent] as TLMArmRecognizedEvent;
@@ -84,6 +96,8 @@ namespace MyoSampleApp
 
 		void armLost (object sender, NSNotificationEventArgs e)
 		{
+			Xamarin.Insights.Track("armLost");
+
 			var notification = e.Notification;
 			// Reset the armLabel and helloLabel
 			armLabel.Text = "Perform the Sync Gesture";
@@ -94,45 +108,65 @@ namespace MyoSampleApp
 
 		void receiveOrientationEvent(object sender, NSNotificationEventArgs e)
 		{
+			Xamarin.Insights.Track("receiveOrientationEvent");
+
 			var notification = e.Notification;
 			// Retrieve the orientation from the NSNotification's userInfo with the kTLMKeyOrientationEvent key.
 			TLMOrientationEvent orientationEvent = notification.UserInfo[TLMMyo.TLMKeyOrientationEvent] as TLMOrientationEvent;
 
 			// Create Euler angles from the quaternion of the orientation.
-			TLMEulerAngles angles;// = TLMEulerAngles.GetAnglesWithQuaternion(orientationEvent.Quaternion);
+			TLMEulerAngles angles = TLMEulerAngles.GetAnglesWithQuaternion(orientationEvent.Quaternion);
 
-			// Next, we want to apply a rotation and perspective transformation based on the pitch, yaw, and roll.
-			//CATransform3D rotationAndPerspectiveTransform = CATransform3DConcat(CATransform3DConcat(CATransform3DRotate (CATransform3DIdentity, angles.pitch.Radians, -1.0, 0.0, 0.0), CATransform3DRotate(CATransform3DIdentity, angles.yaw.Radians, 0.0, 1.0, 0.0)), CATransform3DRotate(CATransform3DIdentity, angles.roll.Radians, 0.0, 0.0, -1.0));
+			try {
+				// Next, we want to apply a rotation and perspective transformation based on the pitch, yaw, and roll.
+				var pitchF = Convert.ToSingle(angles.pitch.Radians);
+				var yawF = Convert.ToSingle(angles.yaw.Radians);
+				var rollF = Convert.ToSingle(angles.roll.Radians);
 
-			// Apply the rotation and perspective transform to helloLabel.
-			//helloLabel.Layer.Transform = rotationAndPerspectiveTransform;
+				var pitch = CATransform3D.MakeRotation(pitchF, -1.0f, 0.0f, 0.0f);
+				var yaw = CATransform3D.MakeRotation(yawF, 0.0f, 1.0f, 0.0f);
+				var roll = CATransform3D.MakeRotation(rollF, 0.0f, 0.0f, -1.0f);
+		
+				CATransform3D rotationAndPerspectiveTransform = pitch.Concat(yaw).Concat(roll);
+
+				// Apply the rotation and perspective transform to helloLabel.
+				helloLabel.Layer.Transform = rotationAndPerspectiveTransform;
+			} catch(Exception ex) {
+				System.Diagnostics.Debug.WriteLine(ex.Message);
+				Xamarin.Insights.Report(ex);
+			}
 		}
 
 		void receiveAccelerometerEvent(object sender, NSNotificationEventArgs e)
 		{
+			Xamarin.Insights.Track("receiveAccelerometerEvent");
+
 			var notification = e.Notification;
 			// Retrieve the accelerometer event from the NSNotification's userInfo with the kTLMKeyAccelerometerEvent.
 			TLMAccelerometerEvent accelerometerEvent = notification.UserInfo[TLMMyo.TLMKeyAccelerometerEvent] as TLMAccelerometerEvent;
 
 			// Get the acceleration vector from the accelerometer event.
-			//GLKVector3 accelerationVector = accelerometerEvent.Vector;
+			Vector3 accelerationVector = accelerometerEvent.Vector;
 
 			// Calculate the magnitude of the acceleration vector.
-			//float magnitude = GLKVector3Length(accelerationVector);
+			float magnitude = accelerationVector.Length;
 
 			// Update the progress bar based on the magnitude of the acceleration vector.
-			//accelerationProgressBar.Progress = magnitude / 8;
+			accelerationProgressBar.Progress = magnitude / 8;
 
 			/* Note you can also access the x, y, z values of the acceleration (in G's) like below
 		     float x = accelerationVector.x;
 		     float y = accelerationVector.y;
 		     float z = accelerationVector.z;
 		     */
+//			accelerationLabel.Text = string.Format("x: {0}, y: {1}, z: {2}", 
+//				accelerationVector.X, accelerationVector.Y, accelerationVector.Z);
 		}
-
 
 		void receivePoseChanged(object sender, NSNotificationEventArgs e)
 		{
+			Xamarin.Insights.Track("receivePoseChanged");
+
 			var notification = e.Notification;
 			// Retrieve the pose from the NSNotification's userInfo with the kTLMKeyPose key.
 			TLMPose pose = notification.UserInfo[TLMMyo.TLMKeyPose] as TLMPose;

@@ -95,7 +95,13 @@
     <Reference Include="System.Core" />
     <Reference Include="monotouch" />
     <Reference Include="Myo">
-      <HintPath>..\..\Myo\Myo\bin\Release\Myo.dll</HintPath>
+      <HintPath>..\..\..\Documents\Projects\Myo\Myo\bin\Release\Myo.dll</HintPath>
+    </Reference>
+    <Reference Include="Xamarin.Insights">
+      <HintPath>..\packages\Xamarin.Insights.1.6.3.94\lib\MonoTouch10\Xamarin.Insights.dll</HintPath>
+    </Reference>
+    <Reference Include="PLCrashReporter">
+      <HintPath>..\packages\Xamarin.Insights.1.6.3.94\lib\MonoTouch10\PLCrashReporter.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -106,6 +112,7 @@
   <ItemGroup>
     <None Include="Info.plist" />
     <None Include="Entitlements.plist" />
+    <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Main.cs" />
